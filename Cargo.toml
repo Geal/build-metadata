@@ -10,3 +10,4 @@ plugin = true
 [dependencies]
 git2 = { version = "0.4", default-features = false, features = [] }
 lazy_static = "^0.2"
+time = "^0.1"

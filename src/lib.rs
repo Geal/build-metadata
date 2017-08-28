@@ -6,6 +6,7 @@ extern crate rustc;
 extern crate rustc_plugin;
 extern crate syntax;
 extern crate git2;
+extern crate time;
 
 use rustc_plugin::Registry;
 use syntax::tokenstream::TokenTree;
@@ -24,6 +25,7 @@ lazy_static! {
 pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_macro("commit", commit);
     reg.register_macro("head", head);
+    reg.register_macro("time", current_time);
 }
 
 fn commit<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
@@ -44,9 +46,18 @@ fn head<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult +
                                      Symbol::intern(&METADATA.head)))
 }
 
+fn current_time<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
+    base::check_zero_tts(cx, sp, tts, "time!");
+
+    let topmost = cx.expansion_cause().unwrap_or(sp);
+    let loc = cx.codemap().lookup_char_pos(topmost.lo);
+
+    base::MacEager::expr(cx.expr_str(topmost, Symbol::intern(&METADATA.time)))
+}
 struct Metadata {
     pub commit_short: String,
     pub head: String,
+    pub time: String,
 }
 
 impl Metadata {
@@ -67,6 +78,7 @@ impl Metadata {
         Metadata {
             commit_short: commit_oid,
             head: head,
+            time: time::now_utc().rfc3339().to_string(),
         }
     }
 }
