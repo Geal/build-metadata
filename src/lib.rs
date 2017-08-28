@@ -12,9 +12,8 @@ use rustc_plugin::Registry;
 use syntax::tokenstream::TokenTree;
 use syntax::codemap::Span;
 use syntax::symbol::Symbol;
-use syntax::ext::base::{self, ExtCtxt, DummyResult, MacResult};
+use syntax::ext::base::{self, ExtCtxt, MacResult};
 use syntax::ext::build::AstBuilder;
-use syntax::print::pprust::tt_to_string;
 use git2::{Repository, DescribeOptions};
 
 lazy_static! {
@@ -32,28 +31,23 @@ fn commit<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult
     base::check_zero_tts(cx, sp, tts, "commit!");
 
     let topmost = cx.expansion_cause().unwrap_or(sp);
-    let loc = cx.codemap().lookup_char_pos(topmost.lo);
-    base::MacEager::expr(cx.expr_str(topmost,
-                                     Symbol::intern(&METADATA.commit_short)))
+    base::MacEager::expr(cx.expr_str(topmost, Symbol::intern(&METADATA.commit_short)))
 }
 
 fn head<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
     base::check_zero_tts(cx, sp, tts, "head!");
 
     let topmost = cx.expansion_cause().unwrap_or(sp);
-    let loc = cx.codemap().lookup_char_pos(topmost.lo);
-    base::MacEager::expr(cx.expr_str(topmost,
-                                     Symbol::intern(&METADATA.head)))
+    base::MacEager::expr(cx.expr_str(topmost, Symbol::intern(&METADATA.head)))
 }
 
 fn current_time<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
     base::check_zero_tts(cx, sp, tts, "time!");
 
     let topmost = cx.expansion_cause().unwrap_or(sp);
-    let loc = cx.codemap().lookup_char_pos(topmost.lo);
-
     base::MacEager::expr(cx.expr_str(topmost, Symbol::intern(&METADATA.time)))
 }
+
 struct Metadata {
     pub commit_short: String,
     pub head: String,
@@ -69,12 +63,13 @@ impl Metadata {
             .expect("head name should be valid utf-8")
             .to_string();
 
-        let desc =
-            repo.describe(&DescribeOptions::new()
-                    .describe_tags()
-                    .show_commit_oid_as_fallback(true))
-                .expect("should get repository description");
+        let desc = repo.describe(&DescribeOptions::new()
+                .describe_tags()
+                .show_commit_oid_as_fallback(true))
+            .expect("should get repository description");
+
         let commit_oid = desc.format(None).unwrap_or(String::from("error"));
+
         Metadata {
             commit_short: commit_oid,
             head: head,
