@@ -18,6 +18,8 @@ Import it with cargo from `crates.io` by adding this to you Cargo.toml` file:
 build_metadata = "^0.1"
 ```
 
+## Example
+
 ```rust
 #![feature(plugin)]
 #![plugin(build_metadata)]
