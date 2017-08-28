@@ -30,24 +30,35 @@ fn commit<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult
 
     let topmost = cx.expansion_cause().unwrap_or(sp);
     let loc = cx.codemap().lookup_char_pos(topmost.lo);
-    base::MacEager::expr(cx.expr_str(topmost, Symbol::intern(&METADATA.commit_oid)))
+    base::MacEager::expr(cx.expr_str(topmost,
+                                     Symbol::intern(&format!("{}-{}",
+                                                             METADATA.head,
+                                                             METADATA.commit_short))))
 }
 
 struct Metadata {
-    pub commit_oid: String,
+    pub commit_short: String,
+    pub head: String,
 }
 
 impl Metadata {
     pub fn new() -> Metadata {
-        let commit_oid = Repository::discover(".")
-            .and_then(|repo| {
-                repo.describe(&DescribeOptions::new()
-                        .describe_tags()
-                        .show_commit_oid_as_fallback(true))
-                    .and_then(|desc| desc.format(None))
-            })
-            .unwrap_or(String::from("error"));
+        let repo = Repository::discover(".").expect("should find a repository");
+        let head = repo.head()
+            .expect("should find head")
+            .shorthand()
+            .expect("head name should be valid utf-8")
+            .to_string();
 
-        Metadata { commit_oid: commit_oid }
+        let desc =
+            repo.describe(&DescribeOptions::new()
+                    .describe_tags()
+                    .show_commit_oid_as_fallback(true))
+                .expect("should get repository description");
+        let commit_oid = desc.format(None).unwrap_or(String::from("error"));
+        Metadata {
+            commit_short: commit_oid,
+            head: head,
+        }
     }
 }
