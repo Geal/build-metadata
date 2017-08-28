@@ -23,6 +23,7 @@ lazy_static! {
 #[plugin_registrar]
 pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_macro("commit", commit);
+    reg.register_macro("head", head);
 }
 
 fn commit<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
@@ -31,9 +32,16 @@ fn commit<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult
     let topmost = cx.expansion_cause().unwrap_or(sp);
     let loc = cx.codemap().lookup_char_pos(topmost.lo);
     base::MacEager::expr(cx.expr_str(topmost,
-                                     Symbol::intern(&format!("{}-{}",
-                                                             METADATA.head,
-                                                             METADATA.commit_short))))
+                                     Symbol::intern(&METADATA.commit_short)))
+}
+
+fn head<'a>(cx: &'a mut ExtCtxt, sp: Span, tts: &[TokenTree]) -> Box<MacResult + 'a> {
+    base::check_zero_tts(cx, sp, tts, "head!");
+
+    let topmost = cx.expansion_cause().unwrap_or(sp);
+    let loc = cx.codemap().lookup_char_pos(topmost.lo);
+    base::MacEager::expr(cx.expr_str(topmost,
+                                     Symbol::intern(&METADATA.head)))
 }
 
 struct Metadata {
